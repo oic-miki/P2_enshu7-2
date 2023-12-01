@@ -1,11 +1,13 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Tokens;
+using P2_sample7_1;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 // 接続文字列の設定
 
 // "Sales.mdf"
-string connectionString = @"";
+string connectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\miki\Source\Repos\P2_enshu7-2\P2_sample7_1\Sales.mdf;Integrated Security=True";
 
 // データベースへの接続準備
 using (SqlConnection conn = new SqlConnection())
@@ -15,7 +17,7 @@ using (SqlConnection conn = new SqlConnection())
      * エンティティのコレクションを追加
      */
     Dictionary<int, Product> products = new Dictionary<int, Product>();
-    List<Order> orders = new List<Order>();
+    List<Order> orderList = new List<Order>();
 
     conn.ConnectionString = connectionString;
 
@@ -46,7 +48,7 @@ using (SqlConnection conn = new SqlConnection())
                 {
 
                     // 値を取り出す
-                    Product product = new Product(
+                    Product product = new ProductObject(
                         // id
                         reader.GetInt32(0),
                         // name
@@ -58,7 +60,7 @@ using (SqlConnection conn = new SqlConnection())
                     products.Add(product.getId(), product);
 
                     // 取り出した値を画面に書く
-                    Console.WriteLine($"id:{product.getId()}, name:{product.getName()}, price:{product.getPrice()}");
+                    Console.WriteLine($"product#getId() -> {product.getId()}\nproduct#getName() -> {product.getName()}\nproduct#getPrice() -> :{product.getPrice()}");
 
                 }
 
@@ -71,12 +73,15 @@ using (SqlConnection conn = new SqlConnection())
             using (SqlDataReader reader = cmd.ExecuteReader())
             {
 
+                // 発注番号
+                int orderNumber = 1;
+
                 // 行を読む
                 while (reader.Read())
                 {
 
                     // 値を取り出す
-                    Order order = new Order(
+                    OrderItem orderItem = new OrderItem(
                         // id
                         reader.GetInt32(0),
                         // productId
@@ -84,8 +89,16 @@ using (SqlConnection conn = new SqlConnection())
                         // quantity
                         reader.GetInt32(2));
 
-                    // リストへエンティティを追加する
-                    orders.Add(order);
+                    // 発注情報のリストに商品が存在すれば発注情報を追加する
+                    Order order = orderList.getOrder(products[orderItem.getProductId()]);
+                    if (orderList.Contains(products[orderItem.getProductId()]))
+                    {
+
+                    }
+                    orderList.Add(order);
+
+                    // 発注の生成
+                    Order order = new Order(orderNumber);
 
                     // 取り出した値を画面に書く
                     Console.WriteLine($"id:{order.getId()}, productId:{order.getProductId()}, quantity:{order.getQuantity()}");
@@ -115,7 +128,7 @@ using (SqlConnection conn = new SqlConnection())
 
         // 合計金額を計算
         Dictionary<int, int> sum = new Dictionary<int, int>();
-        orders.ForEach(order => {
+        orderList.ForEach(order => {
 
             int amount = products[order.getProductId()].getPrice() * order.getQuantity();
 
@@ -142,84 +155,6 @@ using (SqlConnection conn = new SqlConnection())
             Console.WriteLine($"売上合計: id={key} / sum{sum[key]}");
 
         }
-
-    }
-
-}
-
-public class Product
-{
-
-    private int id;
-    private string name;
-    private int price;
-
-    public Product(int id, string name, int price)
-    {
-
-        this.id = id;
-        this.name = name;
-        this.price = price;
-
-    }
-
-    public int getId()
-    {
-
-        return id;
-
-    }
-
-    public string getName()
-    {
-
-        return name;
-
-    }
-
-    public int getPrice()
-    {
-
-        return price;
-
-    }
-
-}
-
-public class Order
-{
-
-    private int id;
-    private int productId;
-    private int quantity;
-
-    public Order(int id, int productId, int quantity)
-    {
-
-        this.id = id;
-        this.productId = productId;
-        this.quantity = quantity;
-
-    }
-
-    public int getId()
-    {
-
-        return id;
-
-    }
-
-    public int getProductId()
-    {
-
-        return productId;
-
-    }
-
-    public int getQuantity()
-    {
-
-        return quantity;
 
     }
 
